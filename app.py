@@ -17,6 +17,9 @@ QUITWORDS = [
     'Leave?',
     'Skedaddle?',
     'Scram?',
+    'Turn tail?',
+    'Make like a tree?',
+    'Run away?',
 ]
 
 with open('config.jsonc', 'r') as f:
@@ -80,6 +83,7 @@ if __name__ == "__main__":
         'Log',
         18, 0,
         column_span=4, row_span=6)
+    text_block_log.set_selectable(False)
 
     def printl(s, end='\n',
                timestampfn=lambda: "{}: ".format(datetime.datetime.now().strftime("%H:%M:%S"))):
@@ -105,6 +109,7 @@ if __name__ == "__main__":
                 printl("socket conn succeeded")
                 s = s.format(" + ")
             else:
+                printl("socket conn failed")
                 s = s.format(" x ")
             label_status.set_title(s)
 
