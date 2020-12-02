@@ -1,0 +1,10 @@
+{
+    "tcp_monitoring": [
+        {
+            "name": "Wireless Coffee Brewer",
+            "ip": "localhost",
+            "port": 8000,
+            "timeout": 3 // We expect 3 seconds maximum timeout for connect as we have good internet
+        }
+    ]
+}

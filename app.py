@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-from socket import socket, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM, timeout
+from threading import TIMEOUT_MAX
 import py_cui
 import json
 import threading
@@ -16,19 +17,28 @@ QUITWORDS = [
     'Scram?',
 ]
 
-with open('config.json', 'r') as f:
-    data = json.load(f)
+with open('config.jsonc', 'r') as f:
+    JSON_DATA = json.load(f)
 
-IP = data['ip']
-MASKED_IP = data['ip'].split('.')[-1]
-PORT = data['port']
+IP_DATA = JSON_DATA['tcp_monitoring'][0]
+
+IP = IP_DATA['ip']
+MASKED_IP = IP_DATA['ip'].split('.')[-1]
+PORT = IP_DATA['port']
+TIMEOUT=IP_DATA['timeout']
 
 
 s = socket(AF_INET, SOCK_STREAM)
-s.connect((IP, PORT))  # The address of the TCP server listening
+s.settimeout(TIMEOUT)
 
+try:
+    s.connect((IP, PORT))  # The address of the TCP server listening
+    s.close()
+    print(f"Connected to ?.?.?.{MASKED_IP}:{PORT}")
+except Exception as e:
+    print(f"TIMED OUT trying to connect to ?.?.?.{MASKED_IP}:{PORT}")
+    exit()
 
-print(f"Connected to ?.?.?.{MASKED_IP}:{PORT}")
 
 if __name__ == "__main__":
     root = py_cui.PyCUI(16, 16)
