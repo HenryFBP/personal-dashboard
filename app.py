@@ -7,8 +7,9 @@ import threading
 import time
 import os
 import random
+import datetime
 
-QUITWORDS=[
+QUITWORDS = [
     'Quit?',
     'Leave?',
     'Skedaddle?',
@@ -34,15 +35,16 @@ if __name__ == "__main__":
 
     label = root.add_label('Label Text', 0, 0)
     button = root.add_button(
-        'Quit', 0, 12, 
-        column_span=3,row_span=2,
+        'Quit', 0, 14,
+        column_span=2, row_span=1,
         command=lambda: exit(0))
 
     text_block_log = root.add_text_block(
-        'Log', 3, 3, column_span=3, row_span=6)
+        'Log', 5, 0, column_span=4, row_span=6)
 
-    def printl(s, end='\n'):
-        text_block_log.set_text(s+end+text_block_log.get())
+    def printl(s, end='\n',
+               timestampfn=lambda: "{}: ".format(datetime.datetime.now().strftime("%H:%M:%S"))):
+        text_block_log.set_text(timestampfn()+s+end+text_block_log.get())
 
     root.set_refresh_timeout(1)
 
@@ -50,8 +52,8 @@ if __name__ == "__main__":
     cuiThread.daemon = True
     cuiThread.start()
 
-    while(True):
+    while(True):  # Main update loop
         printl("sleepin for 1s...")
         button.set_title(random.choice(QUITWORDS))
-        printl(button.get_title())
+        # printl(button.get_title())
         time.sleep(1)
