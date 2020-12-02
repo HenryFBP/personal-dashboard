@@ -54,7 +54,7 @@ if __name__ == "__main__":
     button = root.add_button(
         'Quit', 0, 14,
         column_span=2, row_span=1,
-        command=lambda: exit(0))
+        command=lambda: root.stop())
 
     text_block_log = root.add_text_block(
         'Log', 5, 0, column_span=4, row_span=6)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     cuiThread.daemon = True
     cuiThread.start()
 
-    while(True):  # Main update loop
+    while(not root._stopped):  # Main update loop
         printl("sleepin for 1s...")
         button.set_title(random.choice(QUITWORDS))
         # printl(button.get_title())
