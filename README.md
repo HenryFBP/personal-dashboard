@@ -4,4 +4,4 @@
 
 ## Building
 
-1.  Populate `config.json`.
+1.  Populate `config.jsonc`.
