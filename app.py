@@ -25,22 +25,29 @@ IP_DATA = JSON_DATA['tcp_monitoring'][0]
 IP = IP_DATA['ip']
 MASKED_IP = IP_DATA['ip'].split('.')[-1]
 PORT = IP_DATA['port']
-TIMEOUT=IP_DATA['timeout']
+TIMEOUT = IP_DATA['timeout']
 
 
-s = socket(AF_INET, SOCK_STREAM)
-s.settimeout(TIMEOUT)
+def try_connect_ip_port(ip, port, timeout=5) -> bool:
+    s = socket(AF_INET, SOCK_STREAM)
+    s.settimeout(timeout)
 
-try:
-    s.connect((IP, PORT))  # The address of the TCP server listening
-    s.close()
-    print(f"Connected to ?.?.?.{MASKED_IP}:{PORT}")
-except Exception as e:
-    print(f"TIMED OUT trying to connect to ?.?.?.{MASKED_IP}:{PORT}")
-    exit()
+    try:
+        s.connect((ip, port))
+        s.close()
+        return True
+    except Exception as e:  # Must be generic as socket exception class does not inherit from BaseException... why?!
+        return False
 
 
 if __name__ == "__main__":
+
+    if try_connect_ip_port(IP, PORT, TIMEOUT):
+        print(f"Connected to ?.?.?.{MASKED_IP}:{PORT}")
+    else:
+        print(f"TIMED OUT trying to connect to ?.?.?.{MASKED_IP}:{PORT}")
+        exit()
+
     root = py_cui.PyCUI(16, 16)
 
     label = root.add_label('Label Text', 0, 0)
