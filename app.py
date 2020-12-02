@@ -29,21 +29,46 @@ QUITWORDS = [
 class TCPQueryWidget():
 
     @staticmethod
-    def from_ip_data(data: dict):
+    def from_ip_data(data: dict, *args, **kwargs):
         return TCPQueryWidget(
-            ip=data['ip'], name=data['name'], port=data['port'], timeout=data['timeout'])
+            ip=data['ip'], name=data['name'], port=data['port'], timeout=data['timeout'], *args, **kwargs)
 
     STATUS_FSTRING = "({}s) {}: [ {} ]"
-    STATUS_FSTRING_UNKNOWN = STATUS_FSTRING.format("{}","???.???.???.???", "?")
+    STATUS_FSTRING_UNKNOWN = STATUS_FSTRING.format(
+        "{}", "???.???.???.???", "?")
 
-    def __init__(self, ip, name, port, timeout) -> None:
+    def __init__(self, ip: str, name: str, port: int, timeout: int,
+                 root: py_cui.PyCUI,
+                 row: int = 0, col: int = 0,
+                 col_span: int = 1, row_span: int = 1) -> None:
         self.ip = ip
         self.name = name
         self.port = port
         self.timeout = timeout
         self.up = None
-    
-    def status_unknown(self)->str:
+
+        self.root = root
+        self.row = row
+        self.column = col
+        self.col_span = col_span
+        self.row_span = row_span
+
+        self.block_label_status_name = root.add_block_label(
+            self.name,
+            self.row, self.column,
+            column_span=self.col_span, row_span=self.row_span)
+
+        self.label_status = root.add_label(
+            self.status_unknown(),
+            self.row, self.column,
+            column_span=self.col_span, row_span=self.row_span)
+
+        self.label_status.add_text_color_rule(
+            '\\+', py_cui.GREEN_ON_BLACK, 'contains')
+        self.label_status.add_text_color_rule(
+            'x', py_cui.RED_ON_BLACK, 'contains')
+
+    def status_unknown(self) -> str:
         return self.STATUS_FSTRING_UNKNOWN.format(self.timeout)
 
     def status(self) -> str:
@@ -56,10 +81,12 @@ class TCPQueryWidget():
         if self.up == False:
             return self.STATUS_FSTRING.format(self.timeout, self.ip, " x ")
 
+
     def __str__(self) -> str:
         return self.status()
 
-    def is_up(self) -> bool:
+    def refresh_status(self) -> bool:
+        """Determine if I'm up or not. Also update graphical status."""
         s = socket(AF_INET, SOCK_STREAM)
         s.settimeout(self.timeout)
 
@@ -69,6 +96,8 @@ class TCPQueryWidget():
             self.up = True
         except Exception as e:  # Must be generic as socket exception class does not inherit from BaseException... why?!
             self.up = False
+
+        self.label_status.set_title(self.status())
 
         return self.up
 
@@ -114,10 +143,11 @@ if __name__ == "__main__":
 
     IP_DATA = JSON_DATA['tcp_monitoring'][0]
 
-    tcpQueryWidget = TCPQueryWidget.from_ip_data(IP_DATA)
-
     root = py_cui.PyCUI(24, 16)
     root.set_refresh_timeout(1)
+
+    tcpQueryWidget = TCPQueryWidget.from_ip_data(IP_DATA,
+     root=root, row=0, col=0,col_span=3,row_span=1)
 
     button = root.add_button(
         'Quit',
@@ -135,28 +165,16 @@ if __name__ == "__main__":
                timestampfn=lambda: "{}: ".format(datetime.datetime.now().strftime("%H:%M:%S"))):
         text_block_log.set_text(timestampfn()+s+end+text_block_log.get())
 
-    label_status_name = root.add_block_label(
-        tcpQueryWidget.name,
-        1, 0,
-        column_span=3)
 
-    label_status = root.add_label(
-        tcpQueryWidget.status_unknown(),
-        1, 0,
-        column_span=3)
-    label_status.add_text_color_rule('\\+', py_cui.GREEN_ON_BLACK, 'contains')
-    label_status.add_text_color_rule('x', py_cui.RED_ON_BLACK, 'contains')
 
     def update_label_status(sleeptime=5):
         while True:
             time.sleep(sleeptime)
 
-            if tcpQueryWidget.is_up():
+            if tcpQueryWidget.refresh_status():
                 printl("socket conn for {} succeeded".format(tcpQueryWidget.name))
             else:
                 printl("socket conn for {} failed".format(tcpQueryWidget.name))
-
-            label_status.set_title(str(tcpQueryWidget))
 
     labelStatusThread = threading.Thread(target=lambda: update_label_status())
     labelStatusThread.daemon = True
