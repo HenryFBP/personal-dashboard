@@ -31,14 +31,23 @@ class TCPQueryWidget():
 
     @staticmethod
     def from_ip_data(data: dict, *args, **kwargs):
+
+        ip = data['ip']
+        name = data['name']
+        port = data['port']
+
+        timeout = data['timeout']
+        queryInterval = data.get('queryInterval', 3)
+
         return TCPQueryWidget(
-            ip=data['ip'], name=data['name'], port=data['port'], timeout=data['timeout'], *args, **kwargs)
+            ip, name, port, timeout, queryInterval,
+            *args, **kwargs)
 
     STATUS_FSTRING = "({}s) {}: [ {} ]"
     STATUS_FSTRING_UNKNOWN = STATUS_FSTRING.format(
         "{}", "???.???.???.???", "?")
 
-    def __init__(self, ip: str, name: str, port: int, timeout: int,
+    def __init__(self, ip: str, name: str, port: int, timeout: int, queryInterval: int,
                  root: py_cui.PyCUI,
                  row: int = 0, col: int = 0,
                  col_span: int = 1, row_span: int = 1,
@@ -47,6 +56,7 @@ class TCPQueryWidget():
         self.name = name
         self.port = port
         self.timeout = timeout
+        self.queryInterval = queryInterval
         self.up = None
         self.log_fn = log_fn
 
@@ -103,9 +113,9 @@ class TCPQueryWidget():
 
         return self.up
 
-    def blocking_update_label_status(self, sleeptime=5):
+    def blocking_update_label_status(self):
         while True:
-            time.sleep(sleeptime)
+            time.sleep(self.queryInterval)
 
             if self.refresh_status():
                 self.log_fn("socket conn for {} succeeded".format(self.name))
@@ -158,7 +168,7 @@ if __name__ == "__main__":
     # tcpQueryWidget = TCPQueryWidget.from_ip_data(JSON_DATA['tcp_monitoring'][0],
     #                                              root=root, row=0, col=0, col_span=3, row_span=1)
 
-    tcpQueryWidgets: List = []
+    tcpQueryWidgets: List[TCPQueryWidget] = []
 
     row = 0
     col = 0
@@ -187,7 +197,6 @@ if __name__ == "__main__":
     def printl(s, end='\n',
                timestampfn=lambda: "{}: ".format(datetime.datetime.now().strftime("%H:%M:%S"))):
         text_block_log.set_text(timestampfn()+s+end+text_block_log.get())
-
 
     for tcpQueryWidget in tcpQueryWidgets:
         tcpQueryWidget.log_fn = printl
