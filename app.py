@@ -2,6 +2,7 @@
 
 from socket import socket, AF_INET, SOCK_STREAM, timeout
 from threading import TIMEOUT_MAX
+from typing import List
 import py_cui
 import json
 import threading
@@ -40,12 +41,14 @@ class TCPQueryWidget():
     def __init__(self, ip: str, name: str, port: int, timeout: int,
                  root: py_cui.PyCUI,
                  row: int = 0, col: int = 0,
-                 col_span: int = 1, row_span: int = 1) -> None:
+                 col_span: int = 1, row_span: int = 1,
+                 log_fn=lambda *args, **kwargs: print(*args, **kwargs)) -> None:
         self.ip = ip
         self.name = name
         self.port = port
         self.timeout = timeout
         self.up = None
+        self.log_fn = log_fn
 
         self.root = root
         self.row = row
@@ -81,7 +84,6 @@ class TCPQueryWidget():
         if self.up == False:
             return self.STATUS_FSTRING.format(self.timeout, self.ip, " x ")
 
-
     def __str__(self) -> str:
         return self.status()
 
@@ -100,6 +102,15 @@ class TCPQueryWidget():
         self.label_status.set_title(self.status())
 
         return self.up
+
+    def blocking_update_label_status(self, sleeptime=5):
+        while True:
+            time.sleep(sleeptime)
+
+            if self.refresh_status():
+                self.log_fn("socket conn for {} succeeded".format(self.name))
+            else:
+                self.log_fn("socket conn for {} failed".format(self.name))
 
     def masked_ip(self) -> str:
         return self.ip.split('.')[-1]
@@ -141,13 +152,25 @@ if __name__ == "__main__":
     with open(CONFIG_FILE[0], 'r') as f:
         JSON_DATA = json.load(f)
 
-    IP_DATA = JSON_DATA['tcp_monitoring'][0]
-
     root = py_cui.PyCUI(24, 16)
     root.set_refresh_timeout(1)
 
-    tcpQueryWidget = TCPQueryWidget.from_ip_data(IP_DATA,
-     root=root, row=0, col=0,col_span=3,row_span=1)
+    # tcpQueryWidget = TCPQueryWidget.from_ip_data(JSON_DATA['tcp_monitoring'][0],
+    #                                              root=root, row=0, col=0, col_span=3, row_span=1)
+
+    tcpQueryWidgets: List = []
+
+    row = 0
+    col = 0
+    col_span = 3
+    row_span = 1
+    for ip_data in JSON_DATA['tcp_monitoring']:
+
+        tcpQueryWidgets.append(
+            TCPQueryWidget.from_ip_data(
+                ip_data, root=root, row=row, col=col, col_span=col_span, row_span=row_span))
+
+        row += 1
 
     button = root.add_button(
         'Quit',
@@ -166,19 +189,14 @@ if __name__ == "__main__":
         text_block_log.set_text(timestampfn()+s+end+text_block_log.get())
 
 
+    for tcpQueryWidget in tcpQueryWidgets:
+        tcpQueryWidget.log_fn = printl
 
-    def update_label_status(sleeptime=5):
-        while True:
-            time.sleep(sleeptime)
-
-            if tcpQueryWidget.refresh_status():
-                printl("socket conn for {} succeeded".format(tcpQueryWidget.name))
-            else:
-                printl("socket conn for {} failed".format(tcpQueryWidget.name))
-
-    labelStatusThread = threading.Thread(target=lambda: update_label_status())
-    labelStatusThread.daemon = True
-    labelStatusThread.start()
+        # TODO store these threads...
+        labelStatusThread = threading.Thread(
+            target=tcpQueryWidget.blocking_update_label_status)
+        labelStatusThread.daemon = True
+        labelStatusThread.start()
 
     cuiThread = threading.Thread(target=lambda: root.start())
     cuiThread.daemon = True
