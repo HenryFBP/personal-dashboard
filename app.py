@@ -27,8 +27,16 @@ QUITWORDS = [
 ]
 
 
-class TCPQueryWidget():
+class TCPQueryData():
+    def __init__(self, ip, name, port, timeout, queryInterval) -> None:
+        self.ip = ip
+        self.name = name
+        self.port = port
+        self.timeout = timeout
+        self.queryInterval = queryInterval
 
+
+class TCPQueryWidget(TCPQueryData):
     @staticmethod
     def from_ip_data(data: dict, *args, **kwargs):
 
@@ -52,11 +60,9 @@ class TCPQueryWidget():
                  row: int = 0, col: int = 0,
                  col_span: int = 1, row_span: int = 1,
                  log_fn=lambda *args, **kwargs: print(*args, **kwargs)) -> None:
-        self.ip = ip
-        self.name = name
-        self.port = port
-        self.timeout = timeout
-        self.queryInterval = queryInterval
+
+        TCPQueryData.__init__(self, ip, name, port, timeout, queryInterval)
+
         self.up = None
         self.log_fn = log_fn
 
