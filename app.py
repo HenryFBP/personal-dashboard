@@ -29,11 +29,11 @@ QUITWORDS = [
 
 class TCPQueryData():
     def __init__(self, ip, name, port, timeout, queryInterval) -> None:
-        self.ip = ip
-        self.name = name
-        self.port = port
-        self.timeout = timeout
-        self.queryInterval = queryInterval
+        self.ip: str = ip
+        self.name: str = name
+        self.port: int = port
+        self.timeout: int = timeout
+        self.queryInterval: int = queryInterval
 
 
 class TCPQueryWidget(TCPQueryData):
@@ -91,14 +91,17 @@ class TCPQueryWidget(TCPQueryData):
         return self.STATUS_FSTRING_UNKNOWN.format(self.timeout)
 
     def status(self) -> str:
+
+        fip=self.ip.rjust(15)
+
         if self.up == None:
-            return self.STATUS_FSTRING.format(self.timeout, self.ip, " ? ")
+            return self.STATUS_FSTRING.format(self.timeout, fip, "?")
 
         if self.up == True:
-            return self.STATUS_FSTRING.format(self.timeout, self.ip, " + ")
+            return self.STATUS_FSTRING.format(self.timeout, fip, "+")
 
         if self.up == False:
-            return self.STATUS_FSTRING.format(self.timeout, self.ip, " x ")
+            return self.STATUS_FSTRING.format(self.timeout, fip, "x")
 
     def __str__(self) -> str:
         return self.status()
