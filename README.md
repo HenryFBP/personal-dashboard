@@ -5,3 +5,11 @@
 ## Building
 
 1.  Populate `config.jsonc`.
+
+## Running
+
+### Extra
+
+<https://github.com/remi/teamocil>
+
+    teamocil --layout ./.teamocil/

@@ -1,0 +1,1 @@
+tmux new "teamocil --layout ./.teamocil/sample.yml"
